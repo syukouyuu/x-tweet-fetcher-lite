@@ -1,9 +1,9 @@
 ---
 name: x-tweet-fetcher-lite
 description: >
-  Fetch a single X/Twitter tweet through FxTwitter and fetch selected Chinese
-  platform pages through fetch_china.py. This lite skill intentionally exposes
-  only the maintained scripts in this repository.
+  Fetch a single X/Twitter tweet through FxTwitter and fetch public WeChat
+  articles through fetch_china.py. This lite skill intentionally exposes only
+  the maintained default-supported paths in this repository.
 ---
 
 # X Tweet Fetcher Lite
@@ -11,7 +11,7 @@ description: >
 Use this skill when the user asks to fetch:
 
 - a single public X/Twitter tweet URL
-- supported Chinese platform content with `fetch_china.py`
+- a public WeChat article URL with `fetch_china.py`
 
 This lite version only treats these scripts as supported:
 
@@ -42,22 +42,20 @@ python3 scripts/fetch_tweet.py --url "https://x.com/user/status/123456" --lang e
 The supported single-tweet path has no Python package dependencies beyond the
 standard library. It does require network access to `api.fxtwitter.com`.
 
-## Chinese Platform Fetching
+## WeChat Article Fetching
 
-Fetch supported Chinese platform URLs:
+Fetch public WeChat article URLs:
 
 ```bash
 python3 scripts/fetch_china.py --url "https://mp.weixin.qq.com/s/..." --pretty
-python3 scripts/fetch_china.py --url "https://weibo.com/..." --pretty
-python3 scripts/fetch_china.py --url "https://www.bilibili.com/video/..." --pretty
-python3 scripts/fetch_china.py --url "https://blog.csdn.net/..." --markdown
 ```
 
 Notes:
 
 - WeChat public article fetching can often work through direct HTTP.
-- Weibo, Bilibili, CSDN, Xiaohongshu, and Zhihu paths may require a running
-  Camofox browser service on `localhost:9377`.
+- This is the only default-supported Chinese-platform path in the lite skill.
+- Weibo and Bilibili require a running Camofox browser service on
+  `localhost:9377`; on a default VPS they should be treated as unavailable.
 - If Camofox is unavailable, report that clearly instead of inventing fallback
   behavior.
 
@@ -81,6 +79,7 @@ This skill is intentionally small. If the user asks for:
 - profile analysis
 - tweet growth monitoring
 - paper recommendation or Obsidian export
+- default-VPS Weibo or Bilibili fetching
 
 say that this lite skill does not provide that feature and ask whether they want
 to use another tool or extend the skill.

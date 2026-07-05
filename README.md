@@ -1,9 +1,9 @@
 # x-tweet-fetcher-lite
 
-A small Codex/OpenClaw skill for fetching two kinds of content:
+A small Codex/OpenClaw skill for fetching two default-supported content types:
 
 - single public X/Twitter tweets via `scripts/fetch_tweet.py`
-- selected Chinese platform pages via `scripts/fetch_china.py`
+- public WeChat articles via `scripts/fetch_china.py`
 
 This repository is intentionally trimmed down. It does not include timeline
 crawling, reply crawling, Nitter clients, Playwright clients, profile analysis,
@@ -26,10 +26,10 @@ tweet growth tracking, paper tools, or search utilities.
 ## Requirements
 
 - Python 3.10+
-- No mandatory pip dependencies for the supported single-tweet path
+- No mandatory pip dependencies for the default-supported paths
 - Network access for live fetching
-- Optional Camofox service on `localhost:9377` for Chinese platform pages that
-  need browser rendering
+- Optional Camofox service on `localhost:9377` for experimental Chinese
+  platform paths that need browser rendering
 
 ## Fetch A Single Tweet
 
@@ -52,22 +52,24 @@ python3 scripts/fetch_tweet.py --url "https://x.com/user/status/123456" --text-o
 This route uses FxTwitter and returns tweet text, author metadata, stats,
 media, quote information, and long-form article content when available.
 
-## Fetch Chinese Platform Content
+## Fetch WeChat Articles
 
 ```bash
 python3 scripts/fetch_china.py --url "https://mp.weixin.qq.com/s/..." --pretty
-python3 scripts/fetch_china.py --url "https://weibo.com/..." --pretty
-python3 scripts/fetch_china.py --url "https://www.bilibili.com/video/..." --pretty
-python3 scripts/fetch_china.py --url "https://blog.csdn.net/..." --markdown
 ```
 
-`fetch_china.py` supports automatic platform detection. Some platforms can be
-parsed through direct HTTP, while others require Camofox for rendering.
+Public WeChat article fetching uses direct HTTP in the common case and is the
+only default-supported Chinese-platform path in this lite skill.
 
-## Camofox
+## Experimental Camofox Paths
 
-For pages that require browser rendering, start a Camofox-compatible browser
-service on port `9377`.
+`fetch_china.py` still contains parsers for sites such as Weibo, Bilibili,
+CSDN, Xiaohongshu, and Zhihu, but those paths require a Camofox-compatible
+browser service on `localhost:9377` and are not treated as guaranteed lite
+features.
+
+On a default VPS without Camofox, Weibo and Bilibili will not work. If Camofox is
+not running, report that condition directly.
 
 The helper module `scripts/camofox_client.py` talks to this local service only.
 It is included because `fetch_china.py` imports it.
