@@ -25,7 +25,7 @@ tweet growth tracking, paper tools, or search utilities.
 
 ## Requirements
 
-- Python 3.9+
+- Python 3.10+
 - No mandatory pip dependencies for the supported single-tweet path
 - Network access for live fetching
 - Optional Camofox service on `localhost:9377` for Chinese platform pages that
