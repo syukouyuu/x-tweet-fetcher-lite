@@ -1,5 +1,7 @@
 # x-tweet-fetcher-lite
 
+Current version: `1.1.0`
+
 A small Codex/OpenClaw skill for fetching two default-supported content types:
 
 - single public X/Twitter tweets via `scripts/fetch_tweet.py`
