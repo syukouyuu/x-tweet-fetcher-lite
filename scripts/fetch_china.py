@@ -12,6 +12,7 @@ import re
 import sys
 import argparse
 import time
+import html as html_lib
 import urllib.request
 import urllib.error
 from datetime import datetime, timezone, timedelta
@@ -923,14 +924,18 @@ class WeixinParser(PlatformParser):
         published_at = ""
         content = ""
 
-        # Title: <meta property="og:title" content="...">
+        # Title: standard article title, og:title, or short-content msg_title.
         m = re.search(r'<meta\s+property="og:title"\s+content="([^"]*)"', html)
         if m:
-            title = self._unescape_html(m.group(1))
+            title = self._clean_text(m.group(1))
         if not title:
             m = re.search(r'<h1[^>]*class="rich_media_title"[^>]*>(.*?)</h1>', html, re.DOTALL)
             if m:
-                title = re.sub(r'<[^>]+>', '', m.group(1)).strip()
+                title = self._clean_text(re.sub(r'<[^>]+>', '', m.group(1)))
+        if not title:
+            m = re.search(r'window\.msg_title\s*=\s*window\.title\s*=\s*([\'"])(.*?)\1\s*;', html, re.DOTALL)
+            if m:
+                title = self._clean_js_string(m.group(2))
 
         # Author: <meta name="author" content="...">
         m = re.search(r'<meta\s+name="author"\s+content="([^"]*)"', html)
@@ -953,9 +958,9 @@ class WeixinParser(PlatformParser):
             dt = datetime.fromtimestamp(ts, tz=timezone(timedelta(hours=8)))
             published_at = dt.strftime("%Y-%m-%d %H:%M:%S")
 
-        # Content: <div class="rich_media_content" ...>...</div>
+        # Content: standard rich article body.
         m = re.search(
-            r'<div[^>]*class="rich_media_content[^"]*"[^>]*>(.*?)</div>\s*(?:<div|<script)',
+            r'<div[^>]*(?:id="js_content"|class="[^"]*rich_media_content[^"]*")[^>]*>(.*?)</div>\s*(?:<div|<script)',
             html, re.DOTALL
         )
         if m:
@@ -969,6 +974,13 @@ class WeixinParser(PlatformParser):
             raw = self._unescape_html(raw)
             lines = [line.strip() for line in raw.split('\n') if line.strip()]
             content = '\n'.join(lines)
+
+        # WeChat "short content" pages put the whole post into msg_title/og:title.
+        if not content and title:
+            split_title, split_content = self._split_title_and_content(title)
+            if split_content:
+                title = split_title
+                content = split_content
 
         # Extract images from og:image or content
         images = []
@@ -1034,13 +1046,29 @@ class WeixinParser(PlatformParser):
     @staticmethod
     def _unescape_html(text: str) -> str:
         """Unescape common HTML entities."""
-        text = text.replace("&amp;", "&")
-        text = text.replace("&lt;", "<")
-        text = text.replace("&gt;", ">")
-        text = text.replace("&quot;", '"')
-        text = text.replace("&#39;", "'")
-        text = text.replace("&nbsp;", " ")
-        return text
+        return html_lib.unescape(text).replace("\xa0", " ")
+
+    @classmethod
+    def _clean_text(cls, text: str) -> str:
+        text = cls._unescape_html(text)
+        text = text.replace("\\n", "\n").replace("\\t", "\t")
+        lines = [line.strip() for line in text.splitlines()]
+        return "\n".join(line for line in lines if line)
+
+    @classmethod
+    def _clean_js_string(cls, text: str) -> str:
+        text = text.replace(r"\'", "'").replace(r'\"', '"')
+        text = text.replace(r"\r\n", "\n").replace(r"\n", "\n").replace(r"\t", "\t")
+        text = text.replace(r"\/", "/").replace(r"\\", "\\")
+        return cls._clean_text(text)
+
+    @classmethod
+    def _split_title_and_content(cls, text: str) -> tuple:
+        lines = [line.strip() for line in cls._clean_text(text).splitlines()]
+        lines = [line for line in lines if line]
+        if len(lines) < 2:
+            return text.strip(), ""
+        return lines[0], "\n\n".join(lines[1:])
 
     def to_markdown(self, data: Dict[str, Any]) -> str:
         lines = [
